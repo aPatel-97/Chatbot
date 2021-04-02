@@ -1,9 +1,22 @@
+import sqlite3
 import nltk
 import numpy as np
 import random
 import string
+from user import User
 from nltk.corpus import stopwords
 from nltk.stem.snowball import SnowballStemmer
+
+conn = sqlite3.connect('chat1.db')
+c = conn.cursor()
+#c.execute("""CREATE TABLE user(
+#                name text,
+#                age int,
+#                likes text
+#             );""")
+
+#c.execute("INSERT INTO user VALUES ('Akshar', 23, 'NBA')")
+
 
 f = open('chat.txt', 'r', errors='ignore')
 raw = f.read()
@@ -77,21 +90,64 @@ def response(user_response):
         Bot_response = Bot_response + sent_tokens[idx]
         return Bot_response
 
+#database functions
+def insert_user(u):
+    with conn:
+        c.execute("INSERT INTO user VALUES(:name, :age, :likes)", {'name':u.name, 'age':u.age, 'likes':u.likes})
 
+def get_userLikes_by_name(name):
+    c.execute("SELECT likes FROM user WHERE name=:name", {'name':name})
+    return c.fetchone()
+
+def get_user_by_name(name):
+    c.execute("SELECT * FROM user WHERE name=:name", {'name':name})
+    return c.fetchall()
+    
+def delete_user(name):
+    with conn:
+        c.execute("DELETE from user WHERE name= :name", {'name':name})
+
+def update_user_likes(name, likes):
+    with conn:
+        c.execute("""UPDATE user SET likes= :likes
+                    WHERE name= :name""",
+                  {'name':name, 'likes': likes})
+
+def addUser():
+    print("Enter User Name:")
+    name = input().upper()
+    
+    print("Enter User Age:")
+    age = input()
+
+    u = User(name, age,'')
+    insert_user(u)
+    print("User Added!")
+
+#finding user
+def findUser():
+    print("Enter your name: ")
+    user_response = input().upper()
+    name = get_user_by_name(user_response)
+    if(name ==[]):
+        print("User not found!")
+        print("Enter N to create new user!")
+        print("Enter R to enter another name!")
+        response = input().upper()
+        if(response =='R'):
+            findUser()
+        elif(response =='N'):
+            addUser()
+        else:
+            print("False Input!")
+            findUser()
+    else:
+        print("Hi, ",user_response," what can I answer for you?")
+        return user_response
+        
 flag = True
 print("Bot: My name is Bot. Who am I talking to today? If you want to exit, type Bye!")
-u = 0
-while (u == 0):
-    user_response = input()
-    if (user(user_response) == "Akshar"):
-        u = 1
-        print("Bot: Hi, " + user(user_response))
-    elif (user(user_response) == "Alisher"):
-        u = 2
-        print("Bot: Hi, " + user(user_response))
-    else:
-        print("User not found!")
-        print("Enter another name:")
+user = findUser()
 
 while (flag == True):
     print("You: ")
@@ -111,11 +167,14 @@ while (flag == True):
                 final_words = list(set(word_tokens))
                 print("Bot: ", end="")
                 print(response(user_response))
+                likes = get_userLikes_by_name(user)
+                update_user_likes('AKSHAR', str(likes)+(response(user_response)))
+                likes = get_userLikes_by_name(user)
+                print(str(likes))
                 sent_tokens.remove(user_response)
-                if (u == 1):
-                    AKSHAR.append(response(user_response))
-                elif (u == 2):
-                    ALISHER.append(response(user_response))
     else:
         flag = False
         print("Bot: Bye! take care..")
+
+conn.close()
+
