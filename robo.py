@@ -1,13 +1,13 @@
-#Aksharkumar Patel
-#Alisher Komilov
-#CS4395.0W1
-#HW7 Chatbot Project
+"""
+Aksharkumar Patel
+Alisher Komilov
+CS4395.0W1
+HW7 Chatbot Project
+"""
 
 #imports necessary
 import sqlite3
 import nltk
-import numpy as np
-import random
 import string
 from user import User
 from nltk.corpus import stopwords
